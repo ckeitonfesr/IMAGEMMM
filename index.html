@@ -51,30 +51,22 @@
 
 
     <script>
+function getParameterByName(name) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+}
 
-        function getParameterByName(name) {
+const imageName = getParameterByName('image');
 
-            name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+if (imageName) {
+    const img = document.getElementById('dynamic-image');
+    img.src = '/imagens/' + imageName + '.png';
 
-            var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+    // debug opcional (pode remover depois)
+    console.log('Carregando:', img.src);
+}
+</script>
 
-                results = regex.exec(location.search);
-
-            return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
-
-        }
-
-
-
-        var imageName = getParameterByName('image');
-
-        if (imageName) {
-
-            document.getElementById('dynamic-image').src = 'src/' + imageName + '.png';
-
-        }
-
-    </script>
 
 </body>
 
