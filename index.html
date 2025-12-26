@@ -1,73 +1,40 @@
 <!DOCTYPE html>
-
-<html lang="en">
-
+<html lang="pt-BR">
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>ImageLoader</title>
 
     <style>
-
         html, body {
-
-            overflow: hidden;
-
-            padding: 0;
-
             margin: 0;
-
-            background-color: transparent;
-
-            height: 100%;
-
+            padding: 0;
             width: 100%;
-
+            height: 100%;
+            background: transparent;
+            overflow: hidden;
         }
-
-        
 
         #dynamic-image {
-
-            position: absolute;
-
-            top: 0;
-
-            left: 0;
-
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
-
     </style>
-
 </head>
 
 <body>
-
-    <img id="dynamic-image" src="" alt="">
-
-
+    <img id="dynamic-image" alt="">
 
     <script>
-function getParameterByName(name) {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get(name);
-}
+        const params = new URLSearchParams(window.location.search);
+        const imageName = params.get('image');
 
-const imageName = getParameterByName('image');
-
-if (imageName) {
-    const img = document.getElementById('dynamic-image');
-    img.src = '/imagens/' + imageName + '.png';
-
-    // debug opcional (pode remover depois)
-    console.log('Carregando:', img.src);
-}
-</script>
-
-
+        if (imageName) {
+            const img = document.getElementById('dynamic-image');
+            img.src = '/imagens/' + imageName + '.png';
+            console.log('Imagem carregada:', img.src);
+        }
+    </script>
 </body>
-
 </html>
