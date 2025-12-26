@@ -1,523 +1,81 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+
+<html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Link de Imagem</title>
+
+    <title>ImageLoader</title>
+
     <style>
-        * {
-            margin: 0;
+
+        html, body {
+
+            overflow: hidden;
+
             padding: 0;
-            box-sizing: border-box;
-        }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
+            margin: 0;
 
-        .container {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
-            width: 100%;
-        }
+            background-color: transparent;
 
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-            text-align: center;
-            font-size: 28px;
-        }
-
-        .upload-area {
-            border: 3px dashed #667eea;
-            border-radius: 15px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: #f8f9ff;
-            margin-bottom: 30px;
-        }
-
-        .upload-area:hover {
-            border-color: #764ba2;
-            background: #f0f2ff;
-        }
-
-        .upload-area.dragover {
-            border-color: #764ba2;
-            background: #e8ebff;
-            transform: scale(1.02);
-        }
-
-        .upload-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-
-        .upload-text {
-            color: #666;
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-
-        .upload-hint {
-            color: #999;
-            font-size: 14px;
-        }
-
-        #fileInput {
-            display: none;
-        }
-
-        .preview-section {
-            display: none;
-            margin-top: 30px;
-        }
-
-        .preview-section.active {
-            display: block;
-        }
-
-        .image-preview {
-            max-width: 100%;
-            max-height: 300px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .link-section {
-            margin-top: 20px;
-        }
-
-        .link-label {
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 10px;
-            display: block;
-        }
-
-        .link-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .link-input {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: 'Courier New', monospace;
-        }
-
-        .link-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-copy {
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-copy:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-        }
-
-        .btn-copy:active {
-            transform: translateY(0);
-        }
-
-        .btn-test {
-            background: #764ba2;
-            color: white;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .btn-test:hover {
-            background: #653a8a;
-        }
-
-        .success-message {
-            background: #4caf50;
-            color: white;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
-            text-align: center;
-            display: none;
-        }
-
-        .success-message.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .info-box {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 20px;
-            font-size: 14px;
-            color: #1976d2;
-        }
-
-        .config-group {
-            margin-bottom: 15px;
-        }
-
-        .image-viewer {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
             height: 100%;
-            background: #000;
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-        }
 
-        .image-viewer.active {
-            display: flex;
-        }
-
-        .image-viewer img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-
-        .images-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-            max-height: 400px;
-            overflow-y: auto;
-            padding: 10px;
-            background: #f8f9ff;
-            border-radius: 10px;
-        }
-
-        .image-item {
-            cursor: pointer;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
-            transition: all 0.3s ease;
-            background: white;
-        }
-
-        .image-item:hover {
-            border-color: #667eea;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .image-item.selected {
-            border-color: #764ba2;
-            background: #f0f2ff;
-        }
-
-        .image-item img {
             width: 100%;
-            height: 80px;
-            object-fit: contain;
-            margin-bottom: 8px;
-            border-radius: 5px;
+
         }
 
-        .image-item-name {
-            font-size: 12px;
-            color: #666;
-            word-break: break-word;
-        }
-
-        .loading-text {
-            text-align: center;
-            color: #999;
-            padding: 20px;
-        }
-
-        .error-text {
-            text-align: center;
-            color: #f44336;
-            padding: 20px;
-            background: #ffebee;
-            border-radius: 8px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🖼️ Gerador de Link de Imagem GitHub</h1>
         
-        <div class="config-section" id="configSection">
-            <div class="config-group">
-                <label class="link-label">Usuário do GitHub:</label>
-                <input type="text" id="githubUser" class="link-input" placeholder="seu-usuario">
-            </div>
-            <div class="config-group" style="margin-top: 15px;">
-                <label class="link-label">Nome do Repositório:</label>
-                <input type="text" id="githubRepo" class="link-input" placeholder="nome-do-repo">
-            </div>
-            <div class="config-group" style="margin-top: 15px;">
-                <label class="link-label">Pasta das Imagens:</label>
-                <input type="text" id="imageFolder" class="link-input" placeholder="imagens" value="imagens">
-            </div>
-        </div>
 
-        <div class="images-section" id="imagesSection" style="margin-top: 30px;">
-            <label class="link-label">Imagens disponíveis na pasta:</label>
-            <div class="images-list" id="imagesList">
-                <div class="loading-text">Carregando imagens...</div>
-            </div>
-            
-            <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #eee;">
-                <label class="link-label">Ou digite o nome da imagem manualmente:</label>
-                <input type="text" id="imageName" class="link-input" placeholder="sua-imagem" style="margin-top: 10px;" oninput="generateLinkFromName()">
-            </div>
-        </div>
+        #dynamic-image {
 
-        <div class="preview-section" id="previewSection">
-            <div class="link-section">
-                <label class="link-label">Link gerado (sem .png):</label>
-                <div class="link-container">
-                    <input type="text" id="generatedLink" class="link-input" readonly>
-                    <button class="btn btn-copy" onclick="copyLink()">Copiar</button>
-                </div>
-                <button class="btn btn-test" onclick="testLink()">Testar Link</button>
-                <div class="success-message" id="successMessage">Link copiado com sucesso!</div>
-            </div>
+            position: absolute;
 
-            <div class="info-box">
-                <strong>💡 Como usar:</strong><br>
-                1. Configure seu usuário e repositório do GitHub<br>
-                2. Coloque suas imagens PNG na pasta especificada<br>
-                3. Clique em uma imagem da lista ou digite o nome manualmente<br>
-                4. Copie o link gerado e use no seu IMGUI em Lua<br>
-                5. O link mostra apenas a imagem quando acessado
-            </div>
-        </div>
-    </div>
+            top: 0;
 
-    <div class="image-viewer" id="imageViewer">
-        <img id="viewerImage" alt="Imagem">
-    </div>
+            left: 0;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <img id="dynamic-image" src="" alt="">
+
+
 
     <script>
-        // Verificar se deve mostrar apenas a imagem (modo viewer)
-        const urlParams = new URLSearchParams(window.location.search);
-        const imgParam = urlParams.get('img');
-        
-        if (imgParam) {
-            // Modo viewer - mostra apenas a imagem
-            document.body.style.background = '#000';
-            document.querySelector('.container').style.display = 'none';
-            const imageViewer = document.getElementById('imageViewer');
-            const viewerImage = document.getElementById('viewerImage');
-            imageViewer.classList.add('active');
-            
-            // Adiciona .png ao nome da imagem para carregar
-            // imgParam já vem como "pasta/imagem" ou "imagem"
-            const imagePath = imgParam.endsWith('.png') ? imgParam : imgParam + '.png';
-            viewerImage.src = imagePath;
-            
-            // Se a imagem não carregar, tenta sem extensão
-            viewerImage.onerror = function() {
-                // Tenta com .png se ainda não tiver
-                if (!imgParam.endsWith('.png')) {
-                    this.src = imgParam + '.png';
-                } else {
-                    this.src = imgParam;
-                }
-            };
-        } else {
-            // Modo gerador de links
-            const previewSection = document.getElementById('previewSection');
-            const generatedLink = document.getElementById('generatedLink');
-            const successMessage = document.getElementById('successMessage');
-            const githubUser = document.getElementById('githubUser');
-            const githubRepo = document.getElementById('githubRepo');
-            const imageFolder = document.getElementById('imageFolder');
-            const imageName = document.getElementById('imageName');
-            const imagesList = document.getElementById('imagesList');
-            let selectedImageName = '';
 
-            // Lista de nomes de imagens comuns para tentar carregar
-            const commonImageNames = ['sua-imagem', 'imagem', 'logo', 'icone', 'fundo', 'botao', 'menu', 'lopesdd'];
+        function getParameterByName(name) {
 
-            // Carregar imagens quando a pasta mudar
-            let loadTimeout;
-            imageFolder.addEventListener('input', () => {
-                clearTimeout(loadTimeout);
-                loadTimeout = setTimeout(loadImages, 300);
-            });
+            name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
 
-            // Carregar imagens ao iniciar
-            setTimeout(loadImages, 500);
+            var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
 
-            function loadImages() {
-                const folder = imageFolder.value.trim() || 'imagens';
-                imagesList.innerHTML = '<div class="loading-text">Procurando imagens na pasta "' + folder + '"...</div>';
-                
-                // Tenta carregar imagens conhecidas
-                const imagesToTry = [...commonImageNames];
-                
-                // Se houver nome digitado, adiciona à lista
-                if (imageName.value.trim() && !imagesToTry.includes(imageName.value.trim())) {
-                    imagesToTry.unshift(imageName.value.trim());
-                }
+                results = regex.exec(location.search);
 
-                let loadedCount = 0;
-                let checkedCount = 0;
-                const foundImages = [];
+            return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
 
-                imagesToTry.forEach(imgName => {
-                    checkImageExists(folder, imgName, (name) => {
-                        loadedCount++;
-                        foundImages.push(name);
-                        checkedCount++;
-                        if (checkedCount === imagesToTry.length) {
-                            if (loadedCount === 0) {
-                                imagesList.innerHTML = '<div class="error-text">Nenhuma imagem encontrada. Digite o nome manualmente acima.</div>';
-                            }
-                        }
-                    }, () => {
-                        checkedCount++;
-                        if (checkedCount === imagesToTry.length && loadedCount === 0) {
-                            imagesList.innerHTML = '<div class="error-text">Nenhuma imagem encontrada na pasta "' + folder + '".<br>Digite o nome da imagem manualmente acima.</div>';
-                        }
-                    });
-                });
-            }
-
-            function checkImageExists(folder, name, onSuccess, onError) {
-                const imagePath = folder ? `${folder}/${name}.png` : `${name}.png`;
-                const img = new Image();
-                
-                img.onload = function() {
-                    // Imagem existe, adiciona à lista
-                    const imageItem = document.createElement('div');
-                    imageItem.className = 'image-item';
-                    imageItem.innerHTML = `
-                        <img src="${imagePath}" alt="${name}" onerror="this.style.display='none'">
-                        <div class="image-item-name">${name}</div>
-                    `;
-                    imageItem.onclick = () => selectImage(name, imageItem);
-                    imagesList.appendChild(imageItem);
-                    onSuccess(name);
-                };
-                
-                img.onerror = onError;
-                img.src = imagePath;
-            }
-
-            function selectImage(name, element) {
-                // Remove seleção anterior
-                document.querySelectorAll('.image-item').forEach(item => {
-                    item.classList.remove('selected');
-                });
-                
-                // Seleciona nova imagem
-                element.classList.add('selected');
-                selectedImageName = name;
-                imageName.value = name;
-                generateLink();
-                previewSection.classList.add('active');
-            }
-
-            function generateLinkFromName() {
-                selectedImageName = imageName.value.trim();
-                generateLink();
-                if (selectedImageName) {
-                    previewSection.classList.add('active');
-                }
-            }
-
-            function generateLink() {
-                const user = githubUser.value.trim();
-                const repo = githubRepo.value.trim();
-                const folder = imageFolder.value.trim() || 'imagens';
-                const name = selectedImageName || imageName.value.trim();
-                
-                if (user && repo && name) {
-                    // Gera link do GitHub Pages sem extensão .png
-                    // Formato: https://usuario.github.io/repo/index.html?img=pasta/imagem
-                    const imagePath = folder ? `${folder}/${name}` : name;
-                    const link = `https://${user}.github.io/${repo}/index.html?img=${imagePath}`;
-                    generatedLink.value = link;
-                } else {
-                    generatedLink.value = '';
-                }
-            }
-
-            // Atualizar link quando configurações mudarem
-            githubUser.addEventListener('input', generateLink);
-            githubRepo.addEventListener('input', generateLink);
-            imageFolder.addEventListener('input', generateLink);
-
-            function copyLink() {
-                generatedLink.select();
-                document.execCommand('copy');
-                successMessage.classList.add('show');
-                setTimeout(() => {
-                    successMessage.classList.remove('show');
-                }, 2000);
-            }
-
-            function testLink() {
-                const link = generatedLink.value;
-                if (link) {
-                    // Abre em nova aba mostrando apenas a imagem
-                    window.open(link, '_blank');
-                }
-            }
-
-            // Tornar função global para uso no HTML
-            window.generateLinkFromName = generateLinkFromName;
-            window.copyLink = copyLink;
-            window.testLink = testLink;
         }
+
+
+
+        var imageName = getParameterByName('image');
+
+        if (imageName) {
+
+            document.getElementById('dynamic-image').src = 'src/' + imageName + '.png';
+
+        }
+
     </script>
+
 </body>
+
 </html>
