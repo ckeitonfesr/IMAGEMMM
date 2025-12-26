@@ -224,6 +224,67 @@
             max-height: 100%;
             object-fit: contain;
         }
+
+        .images-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f8f9ff;
+            border-radius: 10px;
+        }
+
+        .image-item {
+            cursor: pointer;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .image-item:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .image-item.selected {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .image-item img {
+            width: 100%;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 8px;
+            border-radius: 5px;
+        }
+
+        .image-item-name {
+            font-size: 12px;
+            color: #666;
+            word-break: break-word;
+        }
+
+        .loading-text {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+        }
+
+        .error-text {
+            text-align: center;
+            color: #f44336;
+            padding: 20px;
+            background: #ffebee;
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body>
@@ -245,20 +306,20 @@
             </div>
         </div>
 
-        <div class="upload-area" id="uploadArea" style="margin-top: 30px;">
-            <div class="upload-icon">📤</div>
-            <div class="upload-text">Selecione sua imagem PNG</div>
-            <div class="upload-hint">A imagem deve estar na pasta do projeto</div>
-            <input type="file" id="fileInput" accept="image/png,.png">
+        <div class="images-section" id="imagesSection" style="margin-top: 30px;">
+            <label class="link-label">Imagens disponíveis na pasta:</label>
+            <div class="images-list" id="imagesList">
+                <div class="loading-text">Carregando imagens...</div>
+            </div>
+            
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #eee;">
+                <label class="link-label">Ou digite o nome da imagem manualmente:</label>
+                <input type="text" id="imageName" class="link-input" placeholder="sua-imagem" style="margin-top: 10px;" oninput="generateLinkFromName()">
+            </div>
         </div>
 
         <div class="preview-section" id="previewSection">
-            <img id="imagePreview" class="image-preview" alt="Preview">
-            
             <div class="link-section">
-                <label class="link-label">Nome da imagem (sem extensão):</label>
-                <input type="text" id="imageName" class="link-input" placeholder="minha-imagem" style="margin-bottom: 15px;">
-                
                 <label class="link-label">Link gerado (sem .png):</label>
                 <div class="link-container">
                     <input type="text" id="generatedLink" class="link-input" readonly>
@@ -272,7 +333,7 @@
                 <strong>💡 Como usar:</strong><br>
                 1. Configure seu usuário e repositório do GitHub<br>
                 2. Coloque suas imagens PNG na pasta especificada<br>
-                3. Selecione a imagem e informe o nome (sem .png)<br>
+                3. Clique em uma imagem da lista ou digite o nome manualmente<br>
                 4. Copie o link gerado e use no seu IMGUI em Lua<br>
                 5. O link mostra apenas a imagem quando acessado
             </div>
@@ -312,80 +373,112 @@
             };
         } else {
             // Modo gerador de links
-            const uploadArea = document.getElementById('uploadArea');
-            const fileInput = document.getElementById('fileInput');
             const previewSection = document.getElementById('previewSection');
-            const imagePreview = document.getElementById('imagePreview');
             const generatedLink = document.getElementById('generatedLink');
             const successMessage = document.getElementById('successMessage');
             const githubUser = document.getElementById('githubUser');
             const githubRepo = document.getElementById('githubRepo');
             const imageFolder = document.getElementById('imageFolder');
             const imageName = document.getElementById('imageName');
+            const imagesList = document.getElementById('imagesList');
+            let selectedImageName = '';
 
-            // Clique na área de upload
-            uploadArea.addEventListener('click', () => {
-                fileInput.click();
+            // Lista de nomes de imagens comuns para tentar carregar
+            const commonImageNames = ['sua-imagem', 'imagem', 'logo', 'icone', 'fundo', 'botao', 'menu', 'lopesdd'];
+
+            // Carregar imagens quando a pasta mudar
+            let loadTimeout;
+            imageFolder.addEventListener('input', () => {
+                clearTimeout(loadTimeout);
+                loadTimeout = setTimeout(loadImages, 300);
             });
 
-            // Arrastar e soltar
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('dragover');
-            });
+            // Carregar imagens ao iniciar
+            setTimeout(loadImages, 500);
 
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('dragover');
-            });
-
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    handleFile(files[0]);
-                }
-            });
-
-            // Seleção de arquivo
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    handleFile(e.target.files[0]);
-                }
-            });
-
-            // Atualizar link quando nome da imagem mudar
-            imageName.addEventListener('input', generateLink);
-            githubUser.addEventListener('input', generateLink);
-            githubRepo.addEventListener('input', generateLink);
-            imageFolder.addEventListener('input', generateLink);
-
-            function handleFile(file) {
-                if (!file.type.startsWith('image/')) {
-                    alert('Por favor, selecione apenas arquivos de imagem PNG!');
-                    return;
+            function loadImages() {
+                const folder = imageFolder.value.trim() || 'imagens';
+                imagesList.innerHTML = '<div class="loading-text">Procurando imagens na pasta "' + folder + '"...</div>';
+                
+                // Tenta carregar imagens conhecidas
+                const imagesToTry = [...commonImageNames];
+                
+                // Se houver nome digitado, adiciona à lista
+                if (imageName.value.trim() && !imagesToTry.includes(imageName.value.trim())) {
+                    imagesToTry.unshift(imageName.value.trim());
                 }
 
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const imageData = e.target.result;
-                    imagePreview.src = imageData;
-                    previewSection.classList.add('active');
-                    
-                    // Define o nome da imagem baseado no nome do arquivo (sem extensão)
-                    const fileName = file.name.replace(/\.(png|jpg|jpeg|gif)$/i, '');
-                    imageName.value = fileName;
-                    
-                    generateLink();
+                let loadedCount = 0;
+                let checkedCount = 0;
+                const foundImages = [];
+
+                imagesToTry.forEach(imgName => {
+                    checkImageExists(folder, imgName, (name) => {
+                        loadedCount++;
+                        foundImages.push(name);
+                        checkedCount++;
+                        if (checkedCount === imagesToTry.length) {
+                            if (loadedCount === 0) {
+                                imagesList.innerHTML = '<div class="error-text">Nenhuma imagem encontrada. Digite o nome manualmente acima.</div>';
+                            }
+                        }
+                    }, () => {
+                        checkedCount++;
+                        if (checkedCount === imagesToTry.length && loadedCount === 0) {
+                            imagesList.innerHTML = '<div class="error-text">Nenhuma imagem encontrada na pasta "' + folder + '".<br>Digite o nome da imagem manualmente acima.</div>';
+                        }
+                    });
+                });
+            }
+
+            function checkImageExists(folder, name, onSuccess, onError) {
+                const imagePath = folder ? `${folder}/${name}.png` : `${name}.png`;
+                const img = new Image();
+                
+                img.onload = function() {
+                    // Imagem existe, adiciona à lista
+                    const imageItem = document.createElement('div');
+                    imageItem.className = 'image-item';
+                    imageItem.innerHTML = `
+                        <img src="${imagePath}" alt="${name}" onerror="this.style.display='none'">
+                        <div class="image-item-name">${name}</div>
+                    `;
+                    imageItem.onclick = () => selectImage(name, imageItem);
+                    imagesList.appendChild(imageItem);
+                    onSuccess(name);
                 };
-                reader.readAsDataURL(file);
+                
+                img.onerror = onError;
+                img.src = imagePath;
+            }
+
+            function selectImage(name, element) {
+                // Remove seleção anterior
+                document.querySelectorAll('.image-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+                
+                // Seleciona nova imagem
+                element.classList.add('selected');
+                selectedImageName = name;
+                imageName.value = name;
+                generateLink();
+                previewSection.classList.add('active');
+            }
+
+            function generateLinkFromName() {
+                selectedImageName = imageName.value.trim();
+                generateLink();
+                if (selectedImageName) {
+                    previewSection.classList.add('active');
+                }
             }
 
             function generateLink() {
                 const user = githubUser.value.trim();
                 const repo = githubRepo.value.trim();
                 const folder = imageFolder.value.trim() || 'imagens';
-                const name = imageName.value.trim();
+                const name = selectedImageName || imageName.value.trim();
                 
                 if (user && repo && name) {
                     // Gera link do GitHub Pages sem extensão .png
@@ -397,6 +490,11 @@
                     generatedLink.value = '';
                 }
             }
+
+            // Atualizar link quando configurações mudarem
+            githubUser.addEventListener('input', generateLink);
+            githubRepo.addEventListener('input', generateLink);
+            imageFolder.addEventListener('input', generateLink);
 
             function copyLink() {
                 generatedLink.select();
@@ -414,6 +512,11 @@
                     window.open(link, '_blank');
                 }
             }
+
+            // Tornar função global para uso no HTML
+            window.generateLinkFromName = generateLinkFromName;
+            window.copyLink = copyLink;
+            window.testLink = testLink;
         }
     </script>
 </body>
